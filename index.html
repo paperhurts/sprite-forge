@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<!-- saved from url=(0038)file:///D:/Downloads/sprite-forge.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprite Forge</title>
+<link href="./index_files/css2" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1a1625;
+    --panel: #2a2140;
+    --border: #4a3d6e;
+    --ink: #f4e9d8;
+    --dim: #a89cc0;
+    --pink: #ff6b9d;
+    --teal: #5eead4;
+    --gold: #fbbf24;
+    --shadow: #0f0a1a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+  }
+  body {
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(255,107,157,0.08) 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(94,234,212,0.06) 0%, transparent 45%);
+    padding: 20px 12px 40px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  header { text-align: center; padding: 10px 0 22px; border-bottom: 2px dashed var(--border); margin-bottom: 22px; }
+  h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(18px, 4vw, 32px);
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, var(--pink), var(--gold), var(--teal));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 3px 3px 0 var(--shadow);
+    margin-bottom: 8px;
+  }
+  .tagline { font-family: 'VT323', monospace; font-size: 18px; color: var(--dim); letter-spacing: 1px; }
+  .blink { animation: blink 1.1s steps(1) infinite; color: var(--teal); }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .layout { display: grid; grid-template-columns: 380px 1fr; gap: 20px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel);
+    border: 3px solid var(--border);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 6px 6px 0 var(--shadow);
+    padding: 18px;
+  }
+  .panel-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px dotted var(--border);
+  }
+  .panel-title::before { content: '> '; color: var(--pink); }
+
+  .stage {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 360px;
+  }
+  .sprite-wrap {
+    position: relative;
+    padding: 32px;
+    background: linear-gradient(135deg, rgba(94,234,212,0.08), rgba(255,107,157,0.08));
+    border: 2px solid var(--border);
+  }
+  canvas {
+    display: block;
+    width: 256px; height: 256px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    animation: idle-bounce 1.4s steps(2) infinite;
+  }
+  @keyframes idle-bounce {
+    0%, 50% { transform: translateY(0); }
+    50.01%, 100% { transform: translateY(-4px); }
+  }
+  @media (max-width: 500px) {
+    canvas { width: 200px; height: 200px; }
+    .sprite-wrap { padding: 20px; }
+    .panel { padding: 14px; }
+  }
+  .meta { margin-top: 16px; font-family: 'VT323', monospace; font-size: 20px; color: var(--dim); text-align: center; }
+  .meta b { color: var(--pink); }
+
+  .control { margin-bottom: 12px; }
+  .control .row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'VT323', monospace; font-size: 17px; margin-bottom: 4px;
+  }
+  .control .val { color: var(--teal); font-weight: bold; }
+  .slider-row { display: flex; gap: 8px; align-items: center; }
+  input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none; appearance: none;
+    height: 8px; background: var(--bg);
+    border: 2px solid var(--border); outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 14px; height: 18px;
+    background: var(--pink); border: 2px solid var(--ink); cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 18px;
+    background: var(--pink); border: 2px solid var(--ink); cursor: pointer; border-radius: 0;
+  }
+  .lock {
+    width: 30px; height: 30px; background: var(--bg); border: 2px solid var(--border);
+    color: var(--dim); font-size: 13px; cursor: pointer;
+  }
+  .lock.on { background: var(--gold); color: var(--shadow); border-color: var(--gold); }
+
+  .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+  button.btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    padding: 12px 6px;
+    background: var(--bg);
+    color: var(--ink);
+    border: 3px solid var(--border);
+    cursor: pointer;
+    letter-spacing: 1px;
+    box-shadow: 3px 3px 0 var(--shadow);
+  }
+  button.btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--shadow); }
+  button.btn.big {
+    grid-column: 1 / -1;
+    background: linear-gradient(90deg, var(--pink), var(--gold));
+    color: var(--shadow); border-color: var(--ink);
+    font-size: 11px; padding: 13px;
+  }
+
+  .seed-box { margin-top: 14px; padding: 10px; background: var(--bg); border: 2px dashed var(--border); }
+  .seed-label { font-family: 'VT323', monospace; font-size: 13px; color: var(--dim); letter-spacing: 1px; margin-bottom: 3px; text-transform: uppercase; }
+  .seed-row { display: flex; gap: 6px; }
+  .seed-input {
+    flex: 1; background: transparent; border: none; color: var(--teal);
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 1px;
+    outline: none; min-width: 0;
+  }
+  .seed-copy {
+    font-family: 'Press Start 2P', monospace; font-size: 8px;
+    padding: 4px 8px; background: var(--border); color: var(--ink);
+    border: none; cursor: pointer;
+  }
+
+  .toast {
+    position: fixed; bottom: 20px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--gold); color: var(--shadow);
+    padding: 10px 18px;
+    font-family: 'Press Start 2P', monospace; font-size: 9px;
+    border: 2px solid var(--shadow); box-shadow: 4px 4px 0 var(--shadow);
+    transition: transform 0.3s; z-index: 100;
+  }
+  .toast.on { transform: translateX(-50%) translateY(0); }
+
+  #err {
+    display: none;
+    background: #c44878; color: white;
+    padding: 12px; margin: 0 0 16px;
+    font-family: monospace; font-size: 12px;
+    white-space: pre-wrap; word-break: break-word;
+    border: 2px solid white;
+  }
+
+  footer { text-align: center; margin-top: 30px; font-family: 'VT323', monospace; color: var(--dim); font-size: 15px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div id="err"></div>
+
+  <header>
+    <h1>SPRITE FORGE</h1>
+    <div class="tagline">16-BIT CHARACTER GENERATOR <span class="blink">|</span></div>
+  </header>
+
+  <div class="layout">
+    <div class="panel">
+      <div class="panel-title">Character Parameters</div>
+      <div id="controls"><div class="control"><div class="row"><span>Skin tone</span><span class="val" id="v-skin">2</span></div><div class="slider-row"><input type="range" min="0" max="5" id="s-skin"><button class="lock" id="l-skin">🔓</button></div></div><div class="control"><div class="row"><span>Hair color</span><span class="val" id="v-hairColor">5</span></div><div class="slider-row"><input type="range" min="0" max="9" id="s-hairColor"><button class="lock" id="l-hairColor">🔓</button></div></div><div class="control"><div class="row"><span>Hair style</span><span class="val" id="v-hairStyle">Short</span></div><div class="slider-row"><input type="range" min="0" max="7" id="s-hairStyle"><button class="lock" id="l-hairStyle">🔓</button></div></div><div class="control"><div class="row"><span>Eye color</span><span class="val" id="v-eye">4</span></div><div class="slider-row"><input type="range" min="0" max="7" id="s-eye"><button class="lock" id="l-eye">🔓</button></div></div><div class="control"><div class="row"><span>Outfit</span><span class="val" id="v-outfit">Robe</span></div><div class="slider-row"><input type="range" min="0" max="4" id="s-outfit"><button class="lock" id="l-outfit">🔓</button></div></div><div class="control"><div class="row"><span>Outfit color</span><span class="val" id="v-outfitColor">3</span></div><div class="slider-row"><input type="range" min="0" max="9" id="s-outfitColor"><button class="lock" id="l-outfitColor">🔓</button></div></div><div class="control"><div class="row"><span>Accessory</span><span class="val" id="v-acc">Cape</span></div><div class="slider-row"><input type="range" min="0" max="4" id="s-acc"><button class="lock" id="l-acc">🔓</button></div></div><div class="control"><div class="row"><span>Headwear</span><span class="val" id="v-hat">Crown</span></div><div class="slider-row"><input type="range" min="0" max="4" id="s-hat"><button class="lock" id="l-hat">🔓</button></div></div><div class="control"><div class="row"><span>Expression</span><span class="val" id="v-expr">Smile</span></div><div class="slider-row"><input type="range" min="0" max="2" id="s-expr"><button class="lock" id="l-expr">🔓</button></div></div><div class="control"><div class="row"><span>Class</span><span class="val" id="v-cls">Wanderer</span></div><div class="slider-row"><input type="range" min="0" max="11" id="s-cls"><button class="lock" id="l-cls">🔓</button></div></div><div class="control"><div class="row"><span>Build</span><span class="val" id="v-bld">Thoughtful</span></div><div class="slider-row"><input type="range" min="0" max="11" id="s-bld"><button class="lock" id="l-bld">🔓</button></div></div></div>
+      <div class="buttons">
+        <button class="btn big" id="btn-random">RANDOMIZE ALL</button>
+        <button class="btn" id="btn-png">SAVE PNG</button>
+        <button class="btn" id="btn-copy">COPY SEED</button>
+      </div>
+      <div class="seed-box">
+        <div class="seed-label">Seed Code</div>
+        <div class="seed-row">
+          <input class="seed-input" id="seed" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off">
+          <button class="seed-copy" id="btn-load">LOAD</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel stage">
+      <div class="panel-title">Preview 32x32 sprite</div>
+      <div class="sprite-wrap">
+        <canvas id="cv" width="32" height="32"></canvas>
+      </div>
+      <div class="meta">Class: <b id="cls">Wanderer</b> · Build: <b id="bld">Thoughtful</b></div>
+    </div>
+  </div>
+
+  <footer>Drag sliders - Lock to preserve on re-roll - Randomize for chaos</footer>
+</div>
+
+<div class="toast" id="toast">Copied</div>
+
+<script>
+(function(){
+  'use strict';
+
+  function showErr(msg) {
+    try {
+      var e = document.getElementById('err');
+      if (e) {
+        e.style.display = 'block';
+        e.textContent = 'ERROR: ' + msg;
+      }
+    } catch(_) {}
+  }
+  window.onerror = function(msg, src, line, col, err) {
+    var stack = '';
+    if (err && err.stack) stack = '\n' + err.stack.split('\n').slice(0,3).join('\n');
+    showErr(msg + ' @ line ' + line + stack);
+    return false;
+  };
+
+  var SKIN = [
+    ['#fce0c4','#e8b89a','#c99178'],
+    ['#f4c9a0','#d8a57c','#a87858'],
+    ['#e8b084','#c4895c','#8f5c3a'],
+    ['#c4895c','#9a6340','#653d24'],
+    ['#8b5a3c','#5e3a22','#3a2414'],
+    ['#c4a898','#9a7b68','#6b4e3d']
+  ];
+  var HAIR = [
+    ['#1a1a2e','#0a0a1a'],
+    ['#5c3a1e','#3a2410'],
+    ['#c49a5c','#8a6838'],
+    ['#b84a2a','#7a2e18'],
+    ['#d4d4e8','#9898b8'],
+    ['#ff6b9d','#c44878'],
+    ['#5eead4','#2d9d8a'],
+    ['#a78bfa','#7c5fd6'],
+    ['#fbbf24','#c48a10'],
+    ['#3a8a5c','#1e5a38']
+  ];
+  var EYE = ['#2d5f8a','#3a8a5c','#8a3a5c','#5c3a8a','#8a5c2d','#2d8a8a','#8a2d2d','#1a1a2e'];
+  var OUTFIT = [
+    ['#c44878','#8a2a54','#ff6b9d'],
+    ['#2d5f8a','#1a3a5c','#5eead4'],
+    ['#3a8a5c','#1e5a38','#8aff9a'],
+    ['#8a5c2d','#5c3a18','#c49a5c'],
+    ['#5c3a8a','#3a1e5c','#a78bfa'],
+    ['#c4892a','#8a5c18','#fbbf24'],
+    ['#8a2d2d','#5c1818','#ff6b6b'],
+    ['#2d8a8a','#185c5c','#5eead4'],
+    ['#3a3a5c','#1a1a2e','#d4d4e8'],
+    ['#d4d4e8','#8a8aa8','#f4e9d8']
+  ];
+
+  var HAIR_NAMES = ['Short','Long','Spiky','Ponytail','Pixie','Braids','Mohawk','Bald'];
+  var OUTFIT_NAMES = ['Tunic','Robe','Armor','Jacket','Dress'];
+  var ACC_NAMES = ['None','Scarf','Cape','Glasses','Earrings'];
+  var HAT_NAMES = ['None','Hood','Headband','Wizard','Crown'];
+  var EXPR_NAMES = ['Neutral','Smile','Wink'];
+  var CLASS_NAMES = ['Ranger','Mage','Warrior','Bard','Cleric','Rogue','Druid','Paladin','Monk','Alchemist','Wanderer','Scholar'];
+  var BUILD_NAMES = ['Valiant','Curious','Reckless','Thoughtful','Mysterious','Cheerful','Grizzled','Radiant','Stoic','Sly','Gentle','Fierce'];
+
+  var CONTROLS = [
+    ['skin', 'Skin tone', SKIN.length - 1, null],
+    ['hairColor', 'Hair color', HAIR.length - 1, null],
+    ['hairStyle', 'Hair style', HAIR_NAMES.length - 1, HAIR_NAMES],
+    ['eye', 'Eye color', EYE.length - 1, null],
+    ['outfit', 'Outfit', OUTFIT_NAMES.length - 1, OUTFIT_NAMES],
+    ['outfitColor', 'Outfit color', OUTFIT.length - 1, null],
+    ['acc', 'Accessory', ACC_NAMES.length - 1, ACC_NAMES],
+    ['hat', 'Headwear', HAT_NAMES.length - 1, HAT_NAMES],
+    ['expr', 'Expression', EXPR_NAMES.length - 1, EXPR_NAMES],
+    ['cls', 'Class', CLASS_NAMES.length - 1, CLASS_NAMES],
+    ['bld', 'Build', BUILD_NAMES.length - 1, BUILD_NAMES]
+  ];
+
+  var state = {};
+  var locks = {};
+  for (var ci = 0; ci < CONTROLS.length; ci++) state[CONTROLS[ci][0]] = 0;
+
+  var canvas, ctx;
+
+  var HAIR_PIXELS = [
+    [[11,6,0],[12,6,0],[13,6,0],[14,6,0],[15,6,0],[16,6,0],[17,6,0],[18,6,0],[19,6,0],[20,6,0],
+     [10,7,0],[11,7,0],[12,7,0],[13,7,0],[14,7,0],[15,7,0],[16,7,0],[17,7,0],[18,7,0],[19,7,0],[20,7,0],[21,7,0],
+     [10,8,0],[11,8,0],[12,8,1],[13,8,1],[14,8,1],[15,8,1],[16,8,1],[17,8,1],[18,8,1],[19,8,1],[20,8,0],[21,8,0],
+     [10,9,0],[11,9,0],[20,9,0],[21,9,0],
+     [10,10,1],[21,10,1]],
+    [[11,6,0],[12,6,0],[13,6,0],[14,6,0],[15,6,0],[16,6,0],[17,6,0],[18,6,0],[19,6,0],[20,6,0],
+     [10,7,0],[11,7,0],[12,7,0],[13,7,0],[14,7,0],[15,7,0],[16,7,0],[17,7,0],[18,7,0],[19,7,0],[20,7,0],[21,7,0],
+     [10,8,0],[11,8,0],[12,8,1],[13,8,1],[14,8,1],[19,8,1],[20,8,0],[21,8,0],
+     [10,9,0],[11,9,0],[20,9,0],[21,9,0],
+     [10,10,0],[21,10,0],[10,11,0],[21,11,0],[10,12,0],[21,12,0],
+     [10,13,1],[21,13,1],[10,14,1],[21,14,1],[11,15,1],[20,15,1]],
+    [[11,5,0],[13,5,0],[15,5,0],[17,5,0],[19,5,0],
+     [11,6,0],[12,6,0],[13,6,0],[14,6,0],[15,6,0],[16,6,0],[17,6,0],[18,6,0],[19,6,0],[20,6,0],
+     [10,7,0],[11,7,0],[12,7,0],[13,7,0],[14,7,0],[15,7,0],[16,7,0],[17,7,0],[18,7,0],[19,7,0],[20,7,0],[21,7,0],
+     [10,8,0],[11,8,1],[12,8,1],[13,8,1],[18,8,1],[19,8,1],[20,8,0],[21,8,0],
+     [10,9,0],[21,9,0]],
+    [[11,6,0],[12,6,0],[13,6,0],[14,6,0],[15,6,0],[16,6,0],[17,6,0],[18,6,0],[19,6,0],[20,6,0],
+     [10,7,0],[11,7,0],[12,7,0],[13,7,0],[14,7,0],[15,7,0],[16,7,0],[17,7,0],[18,7,0],[19,7,0],[20,7,0],[21,7,0],
+     [10,8,0],[11,8,0],[12,8,1],[13,8,1],[19,8,1],[20,8,0],[21,8,0],
+     [10,9,0],[21,9,0],
+     [21,10,0],[22,10,0],[22,11,0],[23,11,0],[22,12,0],[23,12,1],
+     [22,13,1],[23,13,1],[22,14,1]],
+    [[12,6,0],[13,6,0],[14,6,0],[15,6,0],[16,6,0],[17,6,0],[18,6,0],[19,6,0],
+     [11,7,0],[12,7,0],[13,7,0],[14,7,0],[15,7,0],[16,7,0],[17,7,0],[18,7,0],[19,7,0],[20,7,0],
+     [11,8,0],[12,8,1],[13,8,1],[14,8,1],[17,8,1],[18,8,1],[19,8,1],[20,8,0],
+     [11,9,0],[20,9,0]],
+    [[11,6,0],[12,6,0],[13,6,0],[14,6,0],[15,6,0],[16,6,0],[17,6,0],[18,6,0],[19,6,0],[20,6,0],
+     [10,7,0],[11,7,0],[12,7,0],[13,7,0],[14,7,0],[15,7,0],[16,7,0],[17,7,0],[18,7,0],[19,7,0],[20,7,0],[21,7,0],
+     [10,8,0],[11,8,1],[20,8,1],[21,8,0],
+     [9,9,0],[10,9,0],[21,9,0],[22,9,0],
+     [9,10,0],[22,10,0],[9,11,0],[22,11,1],
+     [9,12,1],[22,12,1],[9,13,1],[22,13,0],
+     [10,14,0],[21,14,0]],
+    [[15,4,0],[16,4,0],[15,5,0],[16,5,0],
+     [14,6,0],[15,6,0],[16,6,0],[17,6,0],
+     [14,7,0],[15,7,0],[16,7,0],[17,7,0],
+     [11,8,1],[14,8,1],[15,8,1],[16,8,1],[17,8,1],[20,8,1]],
+    []
+  ];
+
+  function px(x, y, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, 1, 1);
+  }
+
+  function drawOutfit(o, skin) {
+    var main = o[0], shadow = o[1], accent = o[2];
+    var x, y;
+
+    if (state.outfit === 0) {
+      // shoulders
+      for (x = 12; x <= 19; x++) px(x, 16, main);
+      for (x = 11; x <= 20; x++) px(x, 17, main);
+      // chest tapers in
+      for (x = 12; x <= 19; x++) { px(x, 18, main); px(x, 19, main); px(x, 20, main); }
+      for (x = 13; x <= 18; x++) px(x, 21, shadow);
+      // belt
+      for (x = 13; x <= 18; x++) px(x, 22, '#3a2418');
+      px(15, 22, accent); px(16, 22, accent);
+      // arms
+      px(10, 18, main); px(10, 19, main); px(10, 20, shadow);
+      px(21, 18, main); px(21, 19, main); px(21, 20, shadow);
+      px(10, 21, skin[0]); px(21, 21, skin[0]);
+    } else if (state.outfit === 1) {
+      for (x = 12; x <= 19; x++) px(x, 16, main);
+      for (x = 10; x <= 21; x++) {
+        px(x, 17, main); px(x, 18, main); px(x, 19, main); px(x, 20, main);
+        px(x, 21, shadow); px(x, 22, shadow);
+      }
+      px(15, 17, accent); px(16, 17, accent);
+      px(15, 18, accent); px(16, 18, accent);
+      px(15, 19, accent); px(16, 19, accent);
+      px(11, 21, skin[0]); px(20, 21, skin[0]);
+      ctx.fillStyle = shadow;
+      ctx.fillRect(13, 23, 6, 4);
+    } else if (state.outfit === 2) {
+      for (x = 11; x <= 20; x++) px(x, 16, main);
+      for (x = 10; x <= 21; x++) { px(x, 17, main); px(x, 18, main); }
+      for (x = 11; x <= 20; x++) { px(x, 19, main); px(x, 20, shadow); px(x, 21, shadow); }
+      px(14, 18, accent); px(17, 18, accent);
+      px(15, 19, accent); px(16, 19, accent);
+      px(10, 16, shadow); px(21, 16, shadow);
+      px(10, 19, main); px(10, 20, shadow); px(10, 21, skin[0]);
+      px(21, 19, main); px(21, 20, shadow); px(21, 21, skin[0]);
+      for (x = 12; x <= 19; x++) px(x, 22, '#3a2418');
+      px(15, 22, accent); px(16, 22, accent);
+    } else if (state.outfit === 3) {
+      // collar
+      px(14, 16, shadow); px(17, 16, shadow);
+      // shoulders wider
+      for (x = 12; x <= 19; x++) px(x, 17, main);
+      for (x = 11; x <= 20; x++) { px(x, 18, main); px(x, 19, main); }
+      // taper to waist
+      for (x = 12; x <= 19; x++) { px(x, 20, main); px(x, 21, shadow); }
+      for (x = 13; x <= 18; x++) px(x, 22, shadow);
+      // jacket center stripe
+      for (y = 18; y <= 21; y++) { px(15, y, accent); px(16, y, accent); }
+      // arms
+      px(10, 19, main); px(10, 20, main); px(10, 21, skin[0]);
+      px(21, 19, main); px(21, 20, main); px(21, 21, skin[0]);
+    } else {
+      for (x = 12; x <= 19; x++) px(x, 16, main);
+      for (x = 11; x <= 20; x++) { px(x, 17, main); px(x, 18, main); }
+      for (x = 12; x <= 19; x++) px(x, 19, main);
+      for (x = 11; x <= 20; x++) px(x, 20, main);
+      for (x = 10; x <= 21; x++) { px(x, 21, main); px(x, 22, shadow); px(x, 23, shadow); }
+      for (x = 11; x <= 20; x++) px(x, 24, shadow);
+      px(15, 18, accent); px(16, 18, accent);
+      px(10, 18, skin[0]); px(10, 19, skin[0]); px(10, 20, skin[0]);
+      px(21, 18, skin[0]); px(21, 19, skin[0]); px(21, 20, skin[0]);
+      ctx.fillStyle = shadow;
+      ctx.fillRect(12, 24, 8, 1);
+    }
+  }
+
+  function drawAcc(o) {
+    var accent = o[2];
+    var x, y;
+    if (state.acc === 1) {
+      for (x = 12; x <= 19; x++) { px(x, 15, accent); px(x, 16, accent); }
+      px(19, 17, accent); px(20, 17, accent); px(19, 18, accent);
+    } else if (state.acc === 2) {
+      for (y = 16; y <= 24; y++) { px(9, y, accent); px(22, y, accent); }
+      for (y = 17; y <= 23; y++) { px(10, y, o[1]); px(21, y, o[1]); }
+      px(8, 23, accent); px(23, 23, accent);
+      px(8, 24, accent); px(23, 24, accent);
+    } else if (state.acc === 3) {
+      px(12, 10, '#1a1a2e'); px(12, 11, '#1a1a2e');
+      px(15, 10, '#1a1a2e'); px(15, 11, '#1a1a2e');
+      px(16, 11, '#1a1a2e');
+      px(19, 10, '#1a1a2e'); px(19, 11, '#1a1a2e');
+    } else if (state.acc === 4) {
+      px(10, 11, accent); px(21, 11, accent);
+    }
+  }
+
+  function drawHat(o) {
+    var main = o[0], shadow = o[1], accent = o[2];
+    var x, y;
+    if (state.hat === 1) {
+      for (x = 10; x <= 21; x++) px(x, 5, main);
+      for (x = 9; x <= 22; x++) { px(x, 6, main); px(x, 7, main); }
+      for (y = 8; y <= 12; y++) { px(9, y, main); px(22, y, main); }
+      px(10, 8, shadow); px(10, 9, shadow);
+      px(21, 8, shadow); px(21, 9, shadow);
+      px(10, 13, shadow); px(11, 13, shadow); px(11, 14, shadow);
+      px(20, 13, shadow); px(21, 13, shadow); px(20, 14, shadow);
+    } else if (state.hat === 2) {
+      for (x = 10; x <= 21; x++) px(x, 8, accent);
+      px(10, 9, accent); px(21, 9, accent);
+    } else if (state.hat === 3) {
+      px(15, 1, shadow); px(16, 1, shadow);
+      px(15, 2, main); px(16, 2, main); px(17, 2, main);
+      px(14, 3, main); px(15, 3, main); px(16, 3, main); px(17, 3, main);
+      px(13, 4, main); px(14, 4, main); px(15, 4, main); px(16, 4, main); px(17, 4, main); px(18, 4, main);
+      for (x = 12; x <= 19; x++) px(x, 5, accent);
+      for (x = 9; x <= 22; x++) px(x, 6, shadow);
+      for (x = 9; x <= 22; x++) px(x, 7, main);
+    } else if (state.hat === 4) {
+      px(12, 4, '#fbbf24'); px(15, 4, '#fbbf24'); px(18, 4, '#fbbf24');
+      for (x = 11; x <= 19; x++) px(x, 5, '#fbbf24');
+      for (x = 11; x <= 19; x++) px(x, 6, '#c48a10');
+      px(12, 6, '#ff6b9d'); px(15, 6, '#5eead4'); px(18, 6, '#a78bfa');
+    }
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, 32, 32);
+    var skin = SKIN[state.skin];
+    var hair = HAIR[state.hairColor];
+    var eye = EYE[state.eye];
+    var outfit = OUTFIT[state.outfitColor];
+    var x, y;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fillRect(11, 30, 10, 1);
+    ctx.fillRect(12, 31, 8, 1);
+
+    for (y = 23; y <= 29; y++) {
+      px(13, y, outfit[1]); px(14, y, outfit[0]);
+      px(17, y, outfit[0]); px(18, y, outfit[1]);
+    }
+    px(12, 29, '#2a1a10'); px(13, 29, '#2a1a10'); px(14, 29, '#3a2418');
+    px(17, 29, '#3a2418'); px(18, 29, '#2a1a10'); px(19, 29, '#2a1a10');
+    px(12, 30, '#1a0d08'); px(13, 30, '#1a0d08'); px(14, 30, '#2a1a10');
+    px(17, 30, '#2a1a10'); px(18, 30, '#1a0d08'); px(19, 30, '#1a0d08');
+
+    drawOutfit(outfit, skin);
+
+    px(15, 15, skin[1]); px(16, 15, skin[1]);
+
+    for (y = 7; y <= 14; y++) {
+      for (x = 11; x <= 20; x++) {
+        if ((y === 7 || y === 14) && (x === 11 || x === 20)) continue;
+        px(x, y, skin[0]);
+      }
+    }
+    for (x = 12; x <= 19; x++) px(x, 14, skin[1]);
+    px(11, 13, skin[1]);
+    px(20, 8, skin[1]); px(20, 9, skin[1]); px(20, 10, skin[1]);
+
+    if (state.expr === 2) {
+      px(13, 10, hair[1]); px(14, 10, hair[1]);
+      px(17, 10, '#ffffff'); px(18, 10, '#ffffff');
+      px(17, 11, eye); px(18, 11, eye);
+    } else {
+      px(13, 10, '#ffffff'); px(14, 10, '#ffffff');
+      px(17, 10, '#ffffff'); px(18, 10, '#ffffff');
+      px(13, 11, eye); px(14, 11, eye);
+      px(17, 11, eye); px(18, 11, eye);
+    }
+
+    px(13, 9, hair[1]); px(14, 9, hair[1]);
+    px(17, 9, hair[1]); px(18, 9, hair[1]);
+
+    px(15, 12, skin[1]); px(16, 12, skin[1]);
+
+    if (state.expr === 1 || state.expr === 2) {
+      px(14, 13, '#c44878'); px(15, 13, '#c44878');
+      px(16, 13, '#c44878'); px(17, 13, '#c44878');
+    } else {
+      px(15, 13, '#c44878'); px(16, 13, '#c44878');
+    }
+
+    ctx.fillStyle = 'rgba(255,107,157,0.5)';
+    ctx.fillRect(12, 12, 1, 1);
+    ctx.fillRect(19, 12, 1, 1);
+
+    var hairPix = HAIR_PIXELS[state.hairStyle];
+    for (var i = 0; i < hairPix.length; i++) {
+      var p = hairPix[i];
+      px(p[0], p[1], hair[p[2]]);
+    }
+
+    drawAcc(outfit);
+    drawHat(outfit);
+  }
+
+  function buildControls() {
+    var host = document.getElementById('controls');
+    if (!host) { showErr('controls div missing'); return; }
+    host.innerHTML = '';
+
+    for (var i = 0; i < CONTROLS.length; i++) {
+      var c = CONTROLS[i];
+      var key = c[0], label = c[1], max = c[2], names = c[3];
+
+      var wrap = document.createElement('div');
+      wrap.className = 'control';
+
+      var row = document.createElement('div');
+      row.className = 'row';
+      var lblSpan = document.createElement('span');
+      lblSpan.textContent = label;
+      var valSpan = document.createElement('span');
+      valSpan.className = 'val';
+      valSpan.id = 'v-' + key;
+      valSpan.textContent = names ? names[state[key]] : (state[key] + 1);
+      row.appendChild(lblSpan);
+      row.appendChild(valSpan);
+
+      var sliderRow = document.createElement('div');
+      sliderRow.className = 'slider-row';
+
+      var slider = document.createElement('input');
+      slider.type = 'range';
+      slider.min = '0';
+      slider.max = String(max);
+      slider.value = String(state[key]);
+      slider.id = 's-' + key;
+      slider.addEventListener('input', makeSliderHandler(key));
+
+      var lockBtn = document.createElement('button');
+      lockBtn.className = 'lock';
+      lockBtn.textContent = '🔓';
+      lockBtn.id = 'l-' + key;
+      lockBtn.addEventListener('click', makeLockHandler(key));
+
+      sliderRow.appendChild(slider);
+      sliderRow.appendChild(lockBtn);
+
+      wrap.appendChild(row);
+      wrap.appendChild(sliderRow);
+      host.appendChild(wrap);
+    }
+  }
+
+  function makeSliderHandler(key) {
+    return function(e) {
+      state[key] = parseInt(e.target.value, 10);
+      updateDisplay();
+      render();
+      updateSeed();
+    };
+  }
+
+  function makeLockHandler(key) {
+    return function() {
+      locks[key] = !locks[key];
+      var btn = document.getElementById('l-' + key);
+      if (locks[key]) { btn.className = 'lock on'; btn.textContent = '🔒'; }
+      else { btn.className = 'lock'; btn.textContent = '🔓'; }
+    };
+  }
+
+  function updateDisplay() {
+    for (var i = 0; i < CONTROLS.length; i++) {
+      var c = CONTROLS[i];
+      var key = c[0], names = c[3];
+      var v = document.getElementById('v-' + key);
+      var s = document.getElementById('s-' + key);
+      if (v) v.textContent = names ? names[state[key]] : (state[key] + 1);
+      if (s) s.value = String(state[key]);
+    }
+    document.getElementById('cls').textContent = CLASS_NAMES[state.cls];
+    document.getElementById('bld').textContent = BUILD_NAMES[state.bld];
+  }
+
+  function randomize() {
+    for (var i = 0; i < CONTROLS.length; i++) {
+      var c = CONTROLS[i];
+      var key = c[0], max = c[2];
+      if (locks[key]) continue;
+      state[key] = Math.floor(Math.random() * (max + 1));
+    }
+    updateDisplay();
+    render();
+    updateSeed();
+  }
+
+  function encodeSeed() {
+    var parts = [];
+    for (var i = 0; i < CONTROLS.length; i++) {
+      var v = state[CONTROLS[i][0]];
+      var s = v.toString(36).toUpperCase();
+      if (s.length < 2) s = '0' + s;
+      parts.push(s);
+    }
+    return parts.join('-');
+  }
+
+  function decodeSeed(seed) {
+    try {
+      var parts = seed.trim().split('-');
+      if (parts.length !== CONTROLS.length) return false;
+      for (var i = 0; i < CONTROLS.length; i++) {
+        var n = parseInt(parts[i], 36);
+        if (isNaN(n)) return false;
+        var max = CONTROLS[i][2];
+        state[CONTROLS[i][0]] = Math.max(0, Math.min(max, n));
+      }
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function updateSeed() {
+    var el = document.getElementById('seed');
+    if (el) el.value = encodeSeed();
+  }
+
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast on';
+    setTimeout(function() { t.className = 'toast'; }, 1600);
+  }
+
+  function savePNG() {
+    try {
+      var exp = document.createElement('canvas');
+      exp.width = 256; exp.height = 256;
+      var ec = exp.getContext('2d');
+      ec.imageSmoothingEnabled = false;
+      ec.drawImage(canvas, 0, 0, 256, 256);
+      var dataUrl = exp.toDataURL('image/png');
+      showSaveModal(dataUrl, 'sprite-' + encodeSeed() + '.png');
+    } catch (e) {
+      showErr('save: ' + e.message);
+    }
+  }
+
+  function showSaveModal(dataUrl, filename) {
+    // Remove any existing modal
+    var existing = document.getElementById('save-modal');
+    if (existing) existing.parentNode.removeChild(existing);
+
+    var modal = document.createElement('div');
+    modal.id = 'save-modal';
+    modal.style.cssText =
+      'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,10,26,0.95);' +
+      'z-index:9999;display:flex;align-items:center;justify-content:center;' +
+      'padding:20px;flex-direction:column;gap:16px;';
+
+    var img = document.createElement('img');
+    img.src = dataUrl;
+    img.alt = filename;
+    img.style.cssText =
+      'max-width:90%;max-height:60vh;image-rendering:pixelated;' +
+      'border:3px solid #4a3d6e;background:#2a2140;box-shadow:6px 6px 0 #0f0a1a;';
+
+    var instructions = document.createElement('div');
+    instructions.style.cssText =
+      "font-family:'VT323',monospace;color:#f4e9d8;font-size:20px;" +
+      'text-align:center;max-width:90%;line-height:1.4;';
+    instructions.innerHTML =
+      '<div style="color:#fbbf24;margin-bottom:8px;font-family:\'Press Start 2P\',monospace;font-size:11px;letter-spacing:1px;">SAVE YOUR SPRITE</div>' +
+      'Long-press the image<br>then tap <b style="color:#5eead4;">Save to Photos</b><br>' +
+      '<span style="color:#a89cc0;font-size:15px;">or <b style="color:#ff6b9d;">Add to Photos</b> / <b style="color:#ff6b9d;">Download</b></span>';
+
+    // Desktop-friendly direct download link
+    var dlLink = document.createElement('a');
+    dlLink.href = dataUrl;
+    dlLink.download = filename;
+    dlLink.textContent = 'Or tap here to download';
+    dlLink.style.cssText =
+      "font-family:'JetBrains Mono',monospace;color:#5eead4;font-size:13px;" +
+      'text-decoration:underline;padding:6px;';
+
+    var closeBtn = document.createElement('button');
+    closeBtn.textContent = 'CLOSE';
+    closeBtn.style.cssText =
+      "font-family:'Press Start 2P',monospace;font-size:10px;padding:10px 18px;" +
+      'background:#2a2140;color:#f4e9d8;border:3px solid #4a3d6e;' +
+      'cursor:pointer;letter-spacing:1px;box-shadow:3px 3px 0 #0f0a1a;';
+    closeBtn.addEventListener('click', function() {
+      modal.parentNode.removeChild(modal);
+    });
+
+    // Close on background click
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        modal.parentNode.removeChild(modal);
+      }
+    });
+
+    modal.appendChild(img);
+    modal.appendChild(instructions);
+    modal.appendChild(dlLink);
+    modal.appendChild(closeBtn);
+    document.body.appendChild(modal);
+  }
+
+  function copySeed() {
+    var s = encodeSeed();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(s).then(function(){ toast('Seed copied'); }, function(){
+        fallbackCopy(s);
+      });
+    } else {
+      fallbackCopy(s);
+    }
+  }
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); toast('Seed copied'); } catch (e) { toast('Copy failed'); }
+    document.body.removeChild(ta);
+  }
+
+  function init() {
+    try {
+      canvas = document.getElementById('cv');
+      if (!canvas) { showErr('canvas not found'); return; }
+      ctx = canvas.getContext('2d');
+      if (!ctx) { showErr('no 2d context'); return; }
+      ctx.imageSmoothingEnabled = false;
+
+      document.getElementById('btn-random').addEventListener('click', randomize);
+      document.getElementById('btn-png').addEventListener('click', savePNG);
+      document.getElementById('btn-copy').addEventListener('click', copySeed);
+      document.getElementById('btn-load').addEventListener('click', function() {
+        var v = document.getElementById('seed').value;
+        if (decodeSeed(v)) {
+          updateDisplay();
+          render();
+          toast('Seed loaded');
+        } else {
+          toast('Invalid seed');
+        }
+      });
+
+      buildControls();
+      randomize();
+    } catch (e) {
+      showErr('init: ' + e.message);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+
+</body></html>
